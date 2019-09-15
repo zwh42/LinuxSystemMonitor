@@ -10,8 +10,23 @@ using std::string;
 // REMOVE: [[maybe_unused]] once you define the function
 string Format::ElapsedTime(long seconds) { 
     int h, m, s;
+    string result = "";
     h = seconds / 3600;
     m = (seconds - h * 3600) / 60; 
     s = seconds % 60;
-    return std::to_string(h) + ":" + std::to_string(m) + ":" + std::to_string(s);
+    if (h < 10){
+        result += "0";
+    }
+    result += std::to_string(h) + ":" ;
+    if (m < 10){
+        result += "0";
+    }
+    result += std::to_string(m) + ":";
+    if (s < 10){
+        result += "0";
+    }
+    result += std::to_string(s);
+      
+
+    return result;
 }
