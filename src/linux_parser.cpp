@@ -74,7 +74,19 @@ vector<int> LinuxParser::Pids() {
 float LinuxParser::MemoryUtilization() { return 0.0; }
 
 // TODO: Read and return the system uptime
-long LinuxParser::UpTime() { return 0; }
+long LinuxParser::UpTime() { 
+  string line, uptime_s;
+  long uptime_l = -1;
+  std::ifstream stream(kProcDirectory + kUptimeFilename);
+  if (stream.is_open()) {
+    std::getline(stream, line);
+    std::istringstream linestream(line);
+    linestream >> uptime_s;
+    uptime_l = std::stol(uptime_s);
+  }
+
+  return uptime_l; 
+}
 
 // TODO: Read and return the number of jiffies for the system
 long LinuxParser::Jiffies() { return 0; }
@@ -84,10 +96,38 @@ long LinuxParser::Jiffies() { return 0; }
 long LinuxParser::ActiveJiffies(int pid[[maybe_unused]]) { return 0; }
 
 // TODO: Read and return the number of active jiffies for the system
-long LinuxParser::ActiveJiffies() { return 0; }
+long LinuxParser::ActiveJiffies() { 
+  long user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+  long active_jiffies = 0;
+  string cpu, line;
+  std::ifstream stream(kProcDirectory + kStatFilename);
+   if (stream.is_open()) {
+    std::getline(stream, line);
+    std::istringstream linestream(line);
+    linestream >> cpu >> user >> nice >> system >> idle >> iowait >> irq \
+      >> softirq >> steal >> guest >> guest_nice;
+
+    // std::cout<<"user = "<<user<<", idle = "<<idle<<std::endl;  
+    active_jiffies = user + nice + system + irq + softirq + steal;
+  }
+  return active_jiffies; 
+}
 
 // TODO: Read and return the number of idle jiffies for the system
-long LinuxParser::IdleJiffies() { return 0; }
+long LinuxParser::IdleJiffies() { 
+  long user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+  long idle_jiffies = 0;
+  string cpu, line;
+  std::ifstream stream(kProcDirectory + kStatFilename);
+   if (stream.is_open()) {
+    std::getline(stream, line);
+    std::istringstream linestream(line);
+    linestream >> cpu >> user >> nice >> system >> idle >> iowait >> irq \
+      >> softirq >> steal >> guest >> guest_nice;
+    idle_jiffies =  idle + iowait;
+  }
+  return idle_jiffies;   
+}
 
 // TODO: Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() { return {}; }
