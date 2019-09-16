@@ -52,6 +52,12 @@ std::string Ram(int pid);
 std::string Uid(int pid);
 std::string User(int pid);
 long int UpTime(int pid);
+
+//helper function
+std::string FindValueByKeyInFile(std::string const &file_path, std::string const &key);
+void SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c);
+
+
 };  // namespace LinuxParser
 
 #endif

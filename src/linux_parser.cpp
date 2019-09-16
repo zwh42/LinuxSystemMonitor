@@ -183,6 +183,7 @@ int LinuxParser::TotalProcesses() {
 // TODO: Read and return the number of running processes
 int LinuxParser::RunningProcesses() {
   int running_processes = 0;  
+  
   string line, key, value;
   std::ifstream stream(kProcDirectory + kStatFilename);
   if (stream.is_open()) {
@@ -196,21 +197,70 @@ int LinuxParser::RunningProcesses() {
       }
     }  
   }
-   
-   return running_processes; 
+  
+  return running_processes; 
+
 }
 
 // TODO: Read and return the command associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Command(int pid[[maybe_unused]]) { return string(); }
+string LinuxParser::Command(int pid) { 
+  string command = "";
+  std::ifstream stream(kProcDirectory + "/"+ std::to_string(pid) + "/cmdline");
+  if (stream.is_open()){
+    std::getline(stream, command);
+  }
+  return command;
+}
 
 // TODO: Read and return the memory used by a process
 // REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Ram(int pid[[maybe_unused]]) { return string(); }
+string LinuxParser::Ram(int pid) { 
+  string ram = "";  
+
+  //string line, key, value;
+  string status_file = kProcDirectory + "/"+ std::to_string(pid) + kStatusFilename;
+  //std::cout<<"status file = "<<status_file<<std::endl;
+  string line, key, value;
+  std::ifstream stream(status_file);
+  if (stream.is_open()) {
+    while (std::getline(stream, line)) {
+      std::istringstream linestream(line);
+      while (linestream >> key >> value) { 
+        if (key == "VmSize:"){
+          ram = value;
+          break;
+        }
+      }
+    }  
+  }
+  ram = std::to_string(std::stol(ram)/1000);
+
+  return ram; 
+}
 
 // TODO: Read and return the user ID associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Uid(int pid[[maybe_unused]]) { return string(); }
+string LinuxParser::Uid(int pid) { 
+  string uid = "";
+  
+  string line, key, value;
+  string status_file = kProcDirectory + "/"+ std::to_string(pid) + kStatusFilename;
+  std::ifstream stream(status_file);
+  if (stream.is_open()) {
+    while (std::getline(stream, line)) {
+      std::istringstream linestream(line);
+      while (linestream >> key >> value) { 
+        if (key == "Uid:"){
+          uid = value;
+          break;
+        }
+      }
+    }  
+  }
+  
+  return uid; 
+}
 
 // TODO: Read and return the user associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
@@ -219,3 +269,45 @@ string LinuxParser::User(int pid[[maybe_unused]]) { return string(); }
 // TODO: Read and return the uptime of a process
 // REMOVE: [[maybe_unused]] once you define the function
 long LinuxParser::UpTime(int pid[[maybe_unused]]) { return 0; }
+
+string LinuxParser::FindValueByKeyInFile(string const &file_path, string const &key){
+  
+  std::cout<<"parse file: "<<file_path<<std::endl;
+  std::string value = ""; 
+  string line, private_key ;
+  std::ifstream stream(file_path);
+  if (stream.is_open()) {
+    while (std::getline(stream, line)) {
+      std::istringstream linestream(line);
+      while (linestream >> private_key >> value) { 
+        std::cout<<"LALALA private_key "<<private_key<<", "<<"key =  "<<key<<", value = "<<value<<std::endl;
+        if (private_key == key){
+            
+            return value;
+        }
+      }
+    }  
+  } else{
+    std::cout << file_path << " cannot open!"<<std::endl;
+  }
+  //std::cout<<"key =  "<<key<<", value = "<<value<<std::endl;
+  return value;
+
+}
+
+void LinuxParser::SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c)
+{
+  std::string::size_type pos1, pos2;
+  pos2 = s.find(c);
+  pos1 = 0;
+  while(std::string::npos != pos2)
+  {
+    v.push_back(s.substr(pos1, pos2-pos1));
+ 
+    pos1 = pos2 + c.size();
+    pos2 = s.find(c, pos1);
+  }
+  if(pos1 != s.length())
+    v.push_back(s.substr(pos1));
+}
+
