@@ -264,11 +264,78 @@ string LinuxParser::Uid(int pid) {
 
 // TODO: Read and return the user associated with a process
 // REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::User(int pid[[maybe_unused]]) { return string(); }
+string LinuxParser::User(int pid) { 
+  string user = "";
+
+  string line;
+  std::ifstream stream(kPasswordPath);
+  string name = ("x:" + Uid(pid));
+  while (getline(stream, line)) {
+        if (line.find(name) != string::npos)
+            user = line.substr(0, line.find(':'));
+    }
+  return user;  
+}
 
 // TODO: Read and return the uptime of a process
 // REMOVE: [[maybe_unused]] once you define the function
-long LinuxParser::UpTime(int pid[[maybe_unused]]) { return 0; }
+long LinuxParser::UpTime(int pid) { 
+  long uptime = 0;
+  string line;
+  std::vector<string> splited_words;
+  std::ifstream stream(kProcDirectory + "/"+ std::to_string(pid) + kStatFilename);
+  if (stream.is_open()) {
+    std::getline(stream, line);
+    LinuxParser::SplitString(line, splited_words, " ");
+ 
+    uptime = std::stol(splited_words[21]) / sysconf(_SC_CLK_TCK);
+    //std::cout<<"pid "<<pid<<", uptime: "<<uptime<<std::endl;
+    //std::cin.get();
+  } 
+
+  
+  return uptime; 
+}
+
+float LinuxParser::CpuUtilization(int pid){
+  float cpu_utilization = 0.0f;
+
+  string line;
+  std::vector<string> splited_words;
+  long utime = 0, stime = 0, cutime = 0, cstime = 0, starttime = 0; 
+  long hertz = sysconf(_SC_CLK_TCK);
+
+  long uptime = 0;
+  std::ifstream uptime_stream(kProcDirectory + kUptimeFilename);
+  if (uptime_stream.is_open()) {
+    std::getline(uptime_stream, line);
+    SplitString(line, splited_words, " ");
+    uptime = std::stol(splited_words[0]);
+  }
+
+
+  std::ifstream stream(kProcDirectory + "/"+ std::to_string(pid) + kStatFilename);
+  if (stream.is_open()) {
+    std::getline(stream, line);
+    LinuxParser::SplitString(line, splited_words, " ");
+    
+    utime = std::stol(splited_words[14]);
+    stime = std::stol(splited_words[15]);
+    cutime = std::stol(splited_words[16]);
+    cstime = std::stol(splited_words[17]);
+    starttime = std::stol(splited_words[22]);
+
+    
+    long total_time =  utime + stime + cstime;
+    long seconds = uptime - (starttime/hertz); 
+    cpu_utilization = 1.0f * (total_time/hertz) / seconds;  
+   
+  }
+
+  return cpu_utilization;
+}
+
+
 
 string LinuxParser::FindValueByKeyInFile(string const &file_path, string const &key){
   
@@ -280,7 +347,7 @@ string LinuxParser::FindValueByKeyInFile(string const &file_path, string const &
     while (std::getline(stream, line)) {
       std::istringstream linestream(line);
       while (linestream >> private_key >> value) { 
-        std::cout<<"LALALA private_key "<<private_key<<", "<<"key =  "<<key<<", value = "<<value<<std::endl;
+        //std::cout<<"LALALA private_key "<<private_key<<", "<<"key =  "<<key<<", value = "<<value<<std::endl;
         if (private_key == key){
             
             return value;
